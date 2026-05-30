@@ -1,8 +1,7 @@
 // POST /api/auth-save
 // Body: { state, user: { name, email }, isPaid }
-// 인증 결과를 Upstash Redis에 10분간 저장
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 async function redisSet(key, value, ttlSeconds) {
@@ -18,7 +17,7 @@ async function redisSet(key, value, ttlSeconds) {
   return res.json();
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -28,15 +27,13 @@ export default async function handler(req, res) {
 
   try {
     const { state, user, isPaid = false } = req.body;
-
-    if (!state || !user?.email) {
+    if (!state || !user || !user.email) {
       return res.status(400).json({ error: 'Missing state or user.email' });
     }
-
-    await redisSet(`auth:${state}`, { user, isPaid }, 600);
+    await redisSet('auth:' + state, { user, isPaid }, 600);
     return res.json({ ok: true });
   } catch (err) {
     console.error('[auth-save]', err);
     return res.status(500).json({ error: err.message });
   }
-}
+};

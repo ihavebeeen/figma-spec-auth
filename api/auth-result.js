@@ -1,7 +1,6 @@
 // GET /api/auth-result?state=UUID
-// 플러그인이 폴링하여 로그인 결과를 받아가는 엔드포인트
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 async function redisGet(key) {
@@ -19,7 +18,7 @@ async function redisGet(key) {
   return JSON.parse(data.result);
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -31,7 +30,7 @@ export default async function handler(req, res) {
     const { state } = req.query;
     if (!state) return res.status(400).json({ error: 'Missing state parameter' });
 
-    const data = await redisGet(`auth:${state}`);
+    const data = await redisGet('auth:' + state);
     if (!data) return res.json({ found: false });
 
     return res.json({ found: true, user: data.user, isPaid: data.isPaid });
@@ -39,4 +38,4 @@ export default async function handler(req, res) {
     console.error('[auth-result]', err);
     return res.status(500).json({ error: err.message });
   }
-}
+};
